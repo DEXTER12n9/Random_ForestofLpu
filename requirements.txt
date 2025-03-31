@@ -1,0 +1,9 @@
+gradio
+google-generativeai
+faiss-cpu
+python-dotenv
+pypdf2
+markdown2
+PyJWT
+python-multipart
+numpy
