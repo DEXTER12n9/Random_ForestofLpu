@@ -229,6 +229,13 @@ def chat(message, history):
         if is_greeting and not history:
             return "Hello! I'm here to help you with information about LPU. How can I assist you?", ""
 
+        # Extract previous messages from history for context
+        chat_history = []
+        if history:
+            for msg in history:
+                if isinstance(msg, dict):
+                    chat_history.append(f"{msg['role']}: {msg['content']}")
+
         # Process normal queries
         query_embedding = doc_processor.get_embeddings(message)[0]
         results = db_handler.query_similar(query_embedding)
@@ -239,7 +246,12 @@ def chat(message, history):
         context = "\n".join([result['text'] for result in results])
         sources = format_sources(results)
         
+        # Include chat history in prompt for context
+        chat_context = "\n".join(chat_history[-4:]) if chat_history else ""  # Last 4 messages for context
         prompt = f"""You are the LPU AI Assistant. Provide a clear, concise response based on the following context:
+
+        Previous Messages:
+        {chat_context}
 
         Context:
         {context}
@@ -262,7 +274,8 @@ def user_message(message, history):
     """Handle user message submission"""
     response, _ = chat(message, history)
     history = history or []
-    history.append((message, response))
+    history.append({"role": "user", "content": message})
+    history.append({"role": "assistant", "content": response})
     return "", history
 
 # Create Gradio interface
@@ -270,7 +283,7 @@ with gr.Blocks(css=custom_css, theme=gr.themes.Base()) as app:
     with gr.Column(elem_id="app-container"):
         gr.HTML("""
             <div class="header">
-                <h1>LPU Assistant</h1>
+                <h1>LPU AI Assistant Prototype</h1>
                 <p>Ask me anything about Lovely Professional University</p>
             </div>
         """)
@@ -284,8 +297,9 @@ with gr.Blocks(css=custom_css, theme=gr.themes.Base()) as app:
                     label=None,
                     elem_classes=["message-bot", "message-user"],
                     height=450,
-                    avatar_images=("👨‍🏫", "👤"),
+                    avatar_images=("https://th.bing.com/th/id/OIP.WIECMJRJhIIAmbZGxVJddwHaGv?rs=1&pid=ImgDetMain", "https://th.bing.com/th/id/OIP.kpO_asrAGtH-pUBQyHiv5AHaE8?rs=1&pid=ImgDetMain"),
                     show_copy_button=True,
+                    type="messages",
                 )
                 with gr.Row(elem_classes="input-row"):
                     txt = gr.Textbox(
@@ -320,7 +334,7 @@ with gr.Blocks(css=custom_css, theme=gr.themes.Base()) as app:
 
         gr.HTML("""
             <div class="footer">
-                <p>AI Assistant by Raj | © 2024 LPU</p>
+                <p>AI Assistant by Raj | © 2025 LPU</p>
             </div>
         """)
 
