@@ -9,10 +9,8 @@ from utils.document_processor import DocumentProcessor
 from utils.db_handler import DatabaseHandler
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
-
 # Initialize components
+load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY not found in environment variables")
@@ -23,7 +21,7 @@ db_handler = DatabaseHandler()
 
 # Configure Gemini model
 generation_config = {
-    "temperature": 0.7,  # Slightly higher for more natural conversation
+    "temperature": 0.7,
     "top_p": 1,
     "top_k": 1,
     "max_output_tokens": 2048,
@@ -42,57 +40,108 @@ model = genai.GenerativeModel(
     safety_settings=safety_settings
 )
 
-# Custom CSS for better UI
+# Clean, minimalistic CSS
 custom_css = """
+:root {
+    --primary-color: #2c5282;
+    --background-color: #ffffff;
+    --text-color: #2d3748;
+    --border-color: #e2e8f0;
+}
+
 #app-container {
-    max-width: 1200px;
-    margin: auto;
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 0 1rem;
 }
 
-.main-header {
-    background-color: #1e3d59;
-    color: white;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 20px;
+.header {
+    margin-bottom: 2rem;
     text-align: center;
+    color: var(--text-color);
 }
 
-.chat-container {
-    border-radius: 15px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.header h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
 }
 
-.admin-panel {
-    background-color: #f5f5f5;
-    padding: 20px;
-    border-radius: 10px;
+.header p {
+    color: #4a5568;
+    font-size: 1rem;
 }
 
-.footer-text {
-    text-align: center;
-    font-size: 0.9em;
-    color: #666;
-    margin-top: 20px;
+.chat-interface {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    background: var(--background-color);
 }
 
-/* Custom button styling */
-button.primary-btn {
-    background-color: #1e3d59 !important;
-    color: white !important;
-}
-
-/* Chat message styling */
 .message-bot {
-    background-color: #e8f4f8 !important;
-    border-radius: 15px !important;
-    padding: 15px !important;
+    background: #f7fafc !important;
+    padding: 1rem !important;
+    border-radius: 8px 8px 8px 0 !important;
+    border: 1px solid var(--border-color) !important;
+    margin: 0.5rem 0 !important;
 }
 
 .message-user {
-    background-color: #f0f0f0 !important;
-    border-radius: 15px !important;
-    padding: 15px !important;
+    background: #ebf8ff !important;
+    padding: 1rem !important;
+    border-radius: 8px 8px 0 8px !important;
+    border: 1px solid #bee3f8 !important;
+    margin: 0.5rem 0 !important;
+}
+
+.admin-panel {
+    padding: 1.5rem;
+    border-radius: 8px;
+    background: #f7fafc;
+    border: 1px solid var(--border-color);
+}
+
+.input-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+button.primary-btn {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    border-radius: 6px !important;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.875rem !important;
+}
+
+.footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+    font-size: 0.875rem;
+    color: #718096;
+}
+
+.clear-btn {
+    margin-top: 0.5rem;
+    opacity: 0.8;
+    font-size: 0.875rem;
+}
+
+.chat-window {
+    margin-bottom: 1rem;
+    padding: 1rem;
+}
+
+.source-citation {
+    font-size: 0.875rem;
+    color: #718096;
+    border-top: 1px solid var(--border-color);
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
 }
 """
 
@@ -113,11 +162,9 @@ def process_file(file, token):
         if file_type not in ["pdf", "txt", "json", "md"]:
             return "Unsupported file type. Please upload PDF, TXT, JSON, or MD files."
 
-        # Extract text and generate embeddings
         text = doc_processor.extract_text(file_path, file_type)
         embeddings = doc_processor.get_embeddings(text)
 
-        # Store in database
         document_id = str(uuid.uuid4())
         metadata = {
             "filename": Path(file_path).name,
@@ -126,151 +173,162 @@ def process_file(file, token):
         }
 
         if db_handler.add_document(document_id, text, embeddings, metadata):
-            return f"File processed and stored successfully: {Path(file_path).name}"
-        return "Error storing document in database."
+            return f"✓ {Path(file_path).name} processed successfully"
+        return "× Error storing document in database"
 
     except Exception as e:
-        return f"Error processing file: {str(e)}"
-
-def delete_document(doc_id, token):
-    """Delete document from database"""
-    if not verify_token(token):
-        return "Invalid token. Please log in again.", None
-    
-    if db_handler.delete_document(doc_id):
-        return "Document deleted successfully.", get_document_list(token)
-    return "Error deleting document.", None
+        return f"× Error: {str(e)}"
 
 def get_document_list(token):
     """Get list of uploaded documents"""
     if not verify_token(token):
-        return None
+        return []
     
     documents = db_handler.list_documents()
     if not documents:
         return []
     
+    # Convert to list format for dataframe
     return [[doc['filename'], doc['file_type'], doc['upload_date'], doc['id']] 
             for doc in documents]
 
-def chat(message, history):
-    """Handle user chat interactions with LPU-specific customization"""
+def delete_selected_document(selected_rows, token):
+    """Delete selected document from database"""
+    if not verify_token(token):
+        return "Invalid token. Please log in again.", None
+    
     try:
-        # Handle greetings and common queries
+        if not selected_rows or not isinstance(selected_rows, (list, tuple)):
+            return "No document selected", None
+        
+        # Get the document ID from the selected row (last column)
+        doc_id = selected_rows[3]  # ID is in the fourth column
+        
+        if db_handler.delete_document(doc_id):
+            # Get updated document list
+            updated_list = get_document_list(token)
+            return "✓ Document deleted successfully", updated_list
+        return "× Error deleting document", None
+    except Exception as e:
+        return f"× Error: {str(e)}", None
+
+def format_sources(results):
+    """Format source citations"""
+    sources = []
+    for result in results:
+        filename = result.get('metadata', {}).get('filename', 'Unknown Source')
+        sources.append(f"- {filename}")
+    return "\n".join(sources)
+
+def chat(message, history):
+    """Handle user chat interactions"""
+    try:
         message_lower = message.lower()
-        if any(greeting in message_lower for greeting in ["hello", "hi", "hey", "greetings"]):
-            return "Hello! I'm the LPU Assistant, here to help you with information about Lovely Professional University. How can I assist you today?"
+        is_greeting = any(greeting in message_lower for greeting in ["hello", "hi", "hey", "greetings"])
+        
+        if is_greeting and not history:
+            return "Hello! I'm here to help you with information about LPU. How can I assist you?", ""
 
-        # Generate embedding for user query
+        # Process normal queries
         query_embedding = doc_processor.get_embeddings(message)[0]
-        
-        # Get relevant documents
         results = db_handler.query_similar(query_embedding)
-        if not results:
-            return """I apologize, but I don't have enough information to answer your question at the moment. 
-                    Please note that I'm an AI assistant specifically trained to help with LPU-related queries. 
-                    You can contact the university directly for more detailed information.
-                    
-                    This chatbot is maintained by Raj (Developer) and is regularly updated with new information."""
-
-        # Combine relevant documents for context
-        context = "\n".join([result['text'] for result in results])
         
-        # Prepare prompt for Gemini with LPU-specific instructions
-        prompt = f"""You are the AI Assistant for Lovely Professional University (LPU). 
-        Respond in a professional yet friendly manner, maintaining the tone of a university assistant.
-        Base your response on the following context, and if you cannot find the specific information,
-        suggest contacting the relevant department at LPU.
+        if not results:
+            return "I apologize, but I don't have enough information to answer that question. Please contact LPU support for more details.", ""
+
+        context = "\n".join([result['text'] for result in results])
+        sources = format_sources(results)
+        
+        prompt = f"""You are the LPU AI Assistant. Provide a clear, concise response based on the following context:
 
         Context:
         {context}
 
         Question: {message}
 
-        Remember to:
-        - Be polite and professional
-        - Use "we" when referring to LPU
-        - Acknowledge if you're not sure about something
-        - Suggest relevant LPU resources when appropriate
-        """
+        Keep the response professional and focused on LPU-related information. Include specific details and references where possible."""
 
-        # Generate response
-        response = model.generate_content(prompt)
+        response = model.generate_content(prompt).text
+
+        # Add sources to response with formatting
+        response_with_sources = f"{response}\n\n<div class='source-citation'>Sources:\n{sources}</div>"
         
-        # Add footer to response
-        response_text = response.text + "\n\n_Note: This AI assistant is maintained by Raj (Developer) and is regularly updated with new information to serve you better._"
-        return response_text
+        return response_with_sources, ""  # Return empty string to clear input
 
     except Exception as e:
-        return f"""I apologize, but I encountered an error processing your request. Please try again or contact LPU support if the issue persists.
-                Error details: {str(e)}
-                
-                Note: This AI assistant is maintained by Raj (Developer) and is regularly updated with new information."""
+        return f"I apologize, but I encountered an error. Please try again or contact support.", ""
+
+def user_message(message, history):
+    """Handle user message submission"""
+    response, _ = chat(message, history)
+    history = history or []
+    history.append((message, response))
+    return "", history
 
 # Create Gradio interface
-with gr.Blocks(css=custom_css) as app:
+with gr.Blocks(css=custom_css, theme=gr.themes.Base()) as app:
     with gr.Column(elem_id="app-container"):
         gr.HTML("""
-            <div class="main-header">
-                <h1>🎓 LPU AI Assistant</h1>
-                <p>Your knowledgeable guide to Lovely Professional University</p>
+            <div class="header">
+                <h1>LPU Assistant</h1>
+                <p>Ask me anything about Lovely Professional University</p>
             </div>
         """)
 
-        # State variables
         token_state = gr.State("")
 
-        # Admin login interface
+        with gr.Tab("Chat"):
+            with gr.Column(elem_classes="chat-interface"):
+                chatbot = gr.Chatbot(
+                    value=None,
+                    label=None,
+                    elem_classes=["message-bot", "message-user"],
+                    height=450,
+                    avatar_images=("👨‍🏫", "👤"),
+                    show_copy_button=True,
+                )
+                with gr.Row(elem_classes="input-row"):
+                    txt = gr.Textbox(
+                        placeholder="Type your question here...",
+                        scale=8,
+                        show_label=False,
+                        container=False
+                    )
+                    submit_btn = gr.Button("Ask", elem_classes="primary-btn", scale=1)
+                clear_btn = gr.Button("Clear Chat", size="sm", elem_classes="clear-btn")
+
         with gr.Tab("Admin"):
             with gr.Column(elem_classes="admin-panel") as login_column:
-                username = gr.Textbox(label="Username", placeholder="Enter admin username")
+                username = gr.Textbox(label="Username", placeholder="Enter username")
                 password = gr.Textbox(label="Password", type="password", placeholder="Enter password")
                 login_button = gr.Button("Login", elem_classes="primary-btn")
                 login_error = gr.Markdown(visible=False, value="Invalid credentials")
 
             with gr.Column(visible=False, elem_classes="admin-panel") as admin_panel:
-                gr.Markdown("### Document Management")
                 upload_file = gr.File(label="Upload Document")
-                upload_button = gr.Button("Process and Store", elem_classes="primary-btn")
+                upload_button = gr.Button("Process", elem_classes="primary-btn")
                 upload_status = gr.Markdown()
 
-                gr.Markdown("### Document Library")
                 document_list = gr.Dataframe(
-                    headers=["Filename", "Type", "Upload Date", "ID"],
-                    label="Uploaded Documents"
+                    headers=["Name", "Type", "Date", "ID"],
+                    label="Documents",
+                    wrap=True
                 )
                 with gr.Row():
-                    refresh_button = gr.Button("Refresh List", elem_classes="primary-btn")
-                    delete_button = gr.Button("Delete Selected", elem_classes="primary-btn")
-
-        # User chat interface
-        with gr.Tab("Chat"):
-            with gr.Column(elem_classes="chat-container"):
-                chatbot = gr.ChatInterface(
-                    chat,
-                    chatbot=gr.Chatbot(
-                        show_label=False,
-                        elem_classes=["message-bot", "message-user"],
-                        height=500
-                    ),
-                    textbox=gr.Textbox(
-                        placeholder="Ask me anything about LPU...",
-                        container=False,
-                        scale=7
-                    ),
-                    title="Chat with LPU Assistant",
-                    description="I'm here to help you with information about Lovely Professional University.",
-                    theme="soft"
-                )
+                    refresh_button = gr.Button("Refresh", elem_classes="primary-btn")
+                    delete_button = gr.Button("Delete", elem_classes="primary-btn")
 
         gr.HTML("""
-            <div class="footer-text">
-                <p>© 2024 Lovely Professional University | AI Assistant developed and maintained by Raj</p>
-                <p>Regularly updated with new information to serve you better</p>
+            <div class="footer">
+                <p>AI Assistant by Raj | © 2024 LPU</p>
             </div>
         """)
 
     # Event handlers
+    txt.submit(user_message, [txt, chatbot], [txt, chatbot])
+    submit_btn.click(user_message, [txt, chatbot], [txt, chatbot])
+    clear_btn.click(lambda: (None, None), None, [chatbot, txt], queue=False)
+
     login_button.click(
         admin_login,
         inputs=[username, password],
@@ -290,7 +348,7 @@ with gr.Blocks(css=custom_css) as app:
     )
 
     delete_button.click(
-        delete_document,
+        delete_selected_document,
         inputs=[document_list, token_state],
         outputs=[upload_status, document_list]
     )

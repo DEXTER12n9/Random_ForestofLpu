@@ -7,7 +7,8 @@ from pathlib import Path
 class DocumentProcessor:
     def __init__(self, api_key):
         genai.configure(api_key=api_key)
-        self.text_model = 'models/embedding-001'  # Gemini embedding model
+        self.model = genai.GenerativeModel('gemini-1.5-flash-8b')
+        self.embedding_model = 'models/embedding-001'  # This is still used for embeddings as FLASH-8B doesn't generate embeddings
 
     def extract_text(self, file_path: str, file_type: str) -> str:
         """Extract text content from different file types"""
@@ -56,7 +57,7 @@ class DocumentProcessor:
         for chunk in chunks:
             try:
                 embedding = genai.embed_content(
-                    model=self.text_model,
+                    model=self.embedding_model,
                     content=chunk,
                     task_type="retrieval_document"
                 )
