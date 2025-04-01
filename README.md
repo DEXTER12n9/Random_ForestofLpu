@@ -135,7 +135,7 @@ For production deployment:
 ## Vector Search
 
 The application uses FAISS (Facebook AI Similarity Search) for efficient similarity search:
-- Fast and memory-efficient vector similarity search
+- Fast and memory-efficient vector similarity search.
 - Optimized for production use
 - Supports large-scale document collections
 - Easy to deploy and maintain
@@ -153,6 +153,4 @@ The application uses FAISS (Facebook AI Similarity Search) for efficient similar
 
 Feel free to submit issues and enhancement requests!
 
-## License
 
-[Your chosen license]
