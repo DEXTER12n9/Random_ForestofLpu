@@ -16,6 +16,25 @@ short_description: Prototype version of lpu data bot
 
 A Retrieval-Augmented Generation (RAG) chat application built with Gradio, Google's Gemini AI, and FAISS. The application features a secure admin interface for document management and a user chat interface that provides answers based on the uploaded knowledge base.
 
+## System Architecture
+
+### High Level Architecture
+![High Level Architecture](Assets/high%20level%20architecture.png)
+
+### System Activity Diagram
+![System Activity Diagram](Assets/SystemAD.png)
+
+### Authentication Flow
+![Authentication Flow](Assets/Authentication%20Flow.png)
+
+### Admin Interface Sequence
+![Admin Interface Sequence](Assets/Admin%20Interface%20sequence.png)
+
+### Additional System Views
+![System View 1](Assets/fig2c.png)
+![System View 2](Assets/fig3c.png)
+![System View 3](Assets/fig4c.png)
+
 ## Features
 
 - **Secure Admin Interface**
@@ -152,5 +171,3 @@ The application uses FAISS (Facebook AI Similarity Search) for efficient similar
 ## Contributing
 
 Feel free to submit issues and enhancement requests!
-
-
