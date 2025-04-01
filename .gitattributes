@@ -2,3 +2,5 @@
 *.pkl filter=lfs diff=lfs merge=lfs -text
 faiss.index filter=lfs diff=lfs merge=lfs -text
 metadata.pkl filter=lfs diff=lfs merge=lfs -text
+vector_db/faiss.index filter=lfs diff=lfs merge=lfs -text
+vector_db/metadata.pkl filter=lfs diff=lfs merge=lfs -text
