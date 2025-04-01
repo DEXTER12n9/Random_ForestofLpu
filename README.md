@@ -1,3 +1,17 @@
+---
+title: LPU AIBOT PROTOTYPE
+emoji: 😻
+colorFrom: gray
+colorTo: red
+sdk: gradio
+sdk_version: 5.23.2
+app_file: app.py
+pinned: false
+license: apache-2.0
+short_description: Prototype version of lpu data bot
+---
+
+
 # RAG Chat Application with Gemini AI
 
 A Retrieval-Augmented Generation (RAG) chat application built with Gradio, Google's Gemini AI, and FAISS. The application features a secure admin interface for document management and a user chat interface that provides answers based on the uploaded knowledge base.
