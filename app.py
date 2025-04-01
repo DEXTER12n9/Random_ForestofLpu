@@ -143,6 +143,22 @@ button.primary-btn {
     margin-top: 0.5rem;
     padding-top: 0.5rem;
 }
+
+.document-row {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.document-info {
+    flex-grow: 1;
+}
+
+.document-actions {
+    display: flex;
+    gap: 0.5rem;
+}
 """
 
 def admin_login(username, password):
@@ -154,13 +170,16 @@ def admin_login(username, password):
 def process_file(file, token):
     """Process uploaded file and store in database"""
     if not verify_token(token):
-        return "Invalid token. Please log in again."
+        return "Invalid token. Please log in again.", None
     
     try:
+        if not file:
+            return "No file selected.", None
+            
         file_path = file.name
         file_type = Path(file_path).suffix[1:].lower()
         if file_type not in ["pdf", "txt", "json", "md"]:
-            return "Unsupported file type. Please upload PDF, TXT, JSON, or MD files."
+            return "Unsupported file type. Please upload PDF, TXT, JSON, or MD files.", None
 
         text = doc_processor.extract_text(file_path, file_type)
         embeddings = doc_processor.get_embeddings(text)
@@ -173,44 +192,46 @@ def process_file(file, token):
         }
 
         if db_handler.add_document(document_id, text, embeddings, metadata):
-            return f"✓ {Path(file_path).name} processed successfully"
-        return "× Error storing document in database"
+            # Get updated document list
+            updated_list = [[doc['filename'], doc['file_type'], 
+                           doc['upload_date'][:16].replace('T', ' '), 
+                           "🗑️ Delete"] 
+                          for doc in db_handler.list_documents()]
+            return f"✓ {Path(file_path).name} processed successfully", updated_list
+        return "× Error storing document in database", None
 
     except Exception as e:
-        return f"× Error: {str(e)}"
+        return f"× Error: {str(e)}", None
 
-def get_document_list(token):
-    """Get list of uploaded documents"""
-    if not verify_token(token):
-        return []
-    
-    documents = db_handler.list_documents()
-    if not documents:
-        return []
-    
-    # Convert to list format for dataframe
-    return [[doc['filename'], doc['file_type'], doc['upload_date'], doc['id']] 
-            for doc in documents]
-
-def delete_selected_document(selected_rows, token):
-    """Delete selected document from database"""
+def delete_document(evt: gr.SelectData, token, documents):
+    """Delete a document when its delete button is clicked"""
     if not verify_token(token):
         return "Invalid token. Please log in again.", None
     
     try:
-        if not selected_rows or not isinstance(selected_rows, (list, tuple)):
-            return "No document selected", None
+        if evt.column != 3:  # Only handle clicks on the Delete column
+            return None, documents
+            
+        doc_to_delete = documents[evt.index]
+        filename = doc_to_delete[0]
         
-        # Get the document ID from the selected row (last column)
-        doc_id = selected_rows[3]  # ID is in the fourth column
+        # Find document ID by filename
+        all_docs = db_handler.list_documents()
+        doc_id = next((doc['id'] for doc in all_docs if doc['filename'] == filename), None)
         
+        if not doc_id:
+            return "Document not found", documents
+            
         if db_handler.delete_document(doc_id):
-            # Get updated document list
-            updated_list = get_document_list(token)
-            return "✓ Document deleted successfully", updated_list
-        return "× Error deleting document", None
+            # Update document list
+            updated_list = [[doc['filename'], doc['file_type'], 
+                           doc['upload_date'][:16].replace('T', ' '), 
+                           "🗑️ Delete"] 
+                          for doc in db_handler.list_documents()]
+            return f"✓ {filename} deleted successfully", updated_list
+        return "× Error deleting document", documents
     except Exception as e:
-        return f"× Error: {str(e)}", None
+        return f"× Error: {str(e)}", documents
 
 def format_sources(results):
     """Format source citations"""
@@ -283,7 +304,7 @@ with gr.Blocks(css=custom_css, theme=gr.themes.Base()) as app:
     with gr.Column(elem_id="app-container"):
         gr.HTML("""
             <div class="header">
-                <h1>LPU AI Assistant Prototype</h1>
+                <h1>LPU Assistant</h1>
                 <p>Ask me anything about Lovely Professional University</p>
             </div>
         """)
@@ -319,22 +340,33 @@ with gr.Blocks(css=custom_css, theme=gr.themes.Base()) as app:
                 login_error = gr.Markdown(visible=False, value="Invalid credentials")
 
             with gr.Column(visible=False, elem_classes="admin-panel") as admin_panel:
-                upload_file = gr.File(label="Upload Document")
-                upload_button = gr.Button("Process", elem_classes="primary-btn")
-                upload_status = gr.Markdown()
+                with gr.Column() as upload_section:
+                    gr.Markdown("### Upload Documents")
+                    upload_file = gr.File(label="Select Document")
+                    with gr.Row():
+                        with gr.Column(scale=4):
+                            upload_status = gr.Markdown()
+                        with gr.Column(scale=1):
+                            with gr.Row():
+                                upload_button = gr.Button("Process", elem_classes="primary-btn")
 
-                document_list = gr.Dataframe(
-                    headers=["Name", "Type", "Date", "ID"],
-                    label="Documents",
-                    wrap=True
-                )
-                with gr.Row():
-                    refresh_button = gr.Button("Refresh", elem_classes="primary-btn")
-                    delete_button = gr.Button("Delete", elem_classes="primary-btn")
+                with gr.Column() as document_section:
+                    with gr.Row():
+                        gr.Markdown("### Processed Documents")
+                    with gr.Row():
+                        refresh_btn = gr.Button("🔄 Refresh", elem_classes="primary-btn", scale=0)
+                    document_list = gr.Dataframe(
+                            headers=["Name", "Type", "Date", "Actions"],
+                            label="",
+                            value=[],
+                            interactive=False,
+                            wrap=True,
+                            row_count=(5, "fixed")
+                        )
 
         gr.HTML("""
             <div class="footer">
-                <p>AI Assistant by Raj | © 2025 LPU</p>
+                <p>AI Assistant by Raj | © 2024 LPU</p>
             </div>
         """)
 
@@ -349,22 +381,35 @@ with gr.Blocks(css=custom_css, theme=gr.themes.Base()) as app:
         outputs=[token_state, admin_panel, login_error]
     )
 
+    # Process file with loading indicator
     upload_button.click(
         process_file,
         inputs=[upload_file, token_state],
-        outputs=[upload_status]
+        outputs=[upload_status, document_list],
+        show_progress="full"
     )
 
-    refresh_button.click(
-        get_document_list,
+    # Delete document when clicking the delete button
+    document_list.select(
+        delete_document,
+        inputs=[token_state, document_list],
+        outputs=[upload_status, document_list]
+    )
+
+    # Refresh document list
+    def refresh_documents(token):
+        """Refresh the list of documents"""
+        if not verify_token(token):
+            return None
+        return [[doc['filename'], doc['file_type'], 
+                doc['upload_date'][:16].replace('T', ' '), 
+                "🗑️ Delete"] 
+               for doc in db_handler.list_documents()]
+
+    refresh_btn.click(
+        refresh_documents,
         inputs=[token_state],
         outputs=[document_list]
-    )
-
-    delete_button.click(
-        delete_selected_document,
-        inputs=[document_list, token_state],
-        outputs=[upload_status, document_list]
     )
 
 if __name__ == "__main__":
