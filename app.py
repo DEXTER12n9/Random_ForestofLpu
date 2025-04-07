@@ -41,7 +41,7 @@ model = genai.GenerativeModel(
     safety_settings=safety_settings
 )
 
-# Clean, minimalistic CSS with friendly colors
+# Clean, minimalistic CSS with mobile-friendly design
 custom_css = """
 :root {
     --primary-color: #4f46e5;
@@ -53,78 +53,161 @@ custom_css = """
 
 #app-container {
     max-width: 1000px;
-    margin: 2rem auto;
-    padding: 0 1rem;
+    margin: 1rem auto;
+    padding: 0 0.75rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    #app-container {
+        margin: 0.5rem auto;
+        padding: 0 0.5rem;
+    }
 }
 
 .header {
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     text-align: center;
     color: var(--text-color);
     animation: fadeIn 0.5s ease-in;
+    padding: 0 0.5rem;
 }
 
 .header h1 {
-    font-size: 2.5rem;
+    font-size: clamp(1.5rem, 5vw, 2.5rem);
     font-weight: 600;
     margin-bottom: 0.5rem;
     background: linear-gradient(120deg, var(--primary-color), var(--accent-color));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    line-height: 1.2;
+    padding: 0 0.5rem;
+    word-wrap: break-word;
 }
 
 .header p {
     color: #4a5568;
-    font-size: 1.1rem;
+    font-size: clamp(0.9rem, 3vw, 1.1rem);
+    padding: 0 0.5rem;
 }
 
 .chat-interface {
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 1.5rem;
+    padding: 1rem;
     background: var(--background-color);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    margin: 0 0.25rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .chat-interface {
+        padding: 0.5rem;
+        border-radius: 8px;
+        margin: 0;
+    }
 }
 
 .message-bot {
     background: #f8f7ff !important;
-    padding: 1rem !important;
+    padding: 0.75rem !important;
     border-radius: 12px 12px 12px 0 !important;
     border: 1px solid #e4e2ff !important;
     margin: 0.5rem 0 !important;
     transition: all 0.2s ease;
+    font-size: 0.95rem !important;
+    word-wrap: break-word !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
 }
 
 .message-user {
     background: #ebf8ff !important;
-    padding: 1rem !important;
+    padding: 0.75rem !important;
     border-radius: 12px 12px 0 12px !important;
     border: 1px solid #bee3f8 !important;
     margin: 0.5rem 0 !important;
     transition: all 0.2s ease;
+    font-size: 0.95rem !important;
+    word-wrap: break-word !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+@media (max-width: 768px) {
+    .message-bot,
+    .message-user {
+        padding: 0.625rem !important;
+        font-size: 0.9rem !important;
+        margin: 0.375rem 0 !important;
+    }
 }
 
 .admin-panel {
-    padding: 1.5rem;
+    padding: 1rem;
     border-radius: 12px;
     background: #f8f7ff;
     border: 1px solid var(--border-color);
+    margin: 0.5rem 0.25rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .admin-panel {
+        padding: 0.75rem;
+        border-radius: 8px;
+        margin: 0.5rem 0;
+    }
+    
+    .admin-panel input[type="text"],
+    .admin-panel input[type="password"] {
+        font-size: 16px !important;
+    }
 }
 
 .input-row {
     display: flex;
     gap: 0.5rem;
-    margin-top: 1rem;
+    margin-top: 0.75rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .input-row {
+        gap: 0.375rem;
+        margin-top: 0.5rem;
+        flex-direction: column;
+    }
+    
+    .input-row > * {
+        width: 100% !important;
+        margin: 0.25rem 0;
+    }
 }
 
 button.primary-btn {
     background: linear-gradient(120deg, var(--primary-color), var(--accent-color)) !important;
     color: white !important;
     border-radius: 8px !important;
-    padding: 0.5rem 1.2rem !important;
-    font-size: 0.95rem !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.9rem !important;
     transition: all 0.2s ease !important;
     border: none !important;
+    cursor: pointer !important;
+    min-height: 40px !important;
+}
+
+@media (max-width: 768px) {
+    button.primary-btn {
+        width: 100% !important;
+        padding: 0.625rem 0.75rem !important;
+        font-size: 0.85rem !important;
+    }
 }
 
 button.primary-btn:hover {
@@ -132,33 +215,53 @@ button.primary-btn:hover {
     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2) !important;
 }
 
+@media (hover: none) {
+    button.primary-btn:hover {
+        transform: none !important;
+    }
+}
+
 .footer {
-    margin-top: 2rem;
-    padding-top: 1rem;
+    margin-top: 1.5rem;
+    padding: 1rem 0.5rem;
     border-top: 1px solid var(--border-color);
     text-align: center;
-    font-size: 0.95rem;
+    font-size: clamp(0.8rem, 2.5vw, 0.95rem);
     color: #718096;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .clear-btn {
     margin-top: 0.5rem;
+    width: 100%;
+    padding: 0.5rem !important;
+    font-size: 0.9rem;
     opacity: 0.9;
-    font-size: 0.95rem;
     transition: all 0.2s ease;
 }
 
 .chat-window {
     margin-bottom: 1rem;
-    padding: 1rem;
+    padding: 0.75rem;
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+}
+
+@media (max-width: 768px) {
+    .chat-window {
+        padding: 0.5rem;
+        max-height: 60vh !important;
+    }
 }
 
 .source-citation {
-    font-size: 0.875rem;
+    font-size: clamp(0.75rem, 2.5vw, 0.875rem);
     color: #718096;
     border-top: 1px solid var(--border-color);
     margin-top: 0.5rem;
-    padding-top: 0.5rem;
+    padding: 0.5rem;
+    word-wrap: break-word;
 }
 
 .document-row {
@@ -166,15 +269,38 @@ button.primary-btn:hover {
     align-items: center;
     padding: 0.5rem;
     border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .document-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.375rem;
+        padding: 0.75rem 0.5rem;
+    }
 }
 
 .document-info {
-    flex-grow: 1;
+    flex: 1;
+    min-width: 0;
+    word-wrap: break-word;
 }
 
 .document-actions {
     display: flex;
     gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .document-actions {
+        width: 100%;
+    }
+    
+    .document-actions button {
+        width: 100%;
+    }
 }
 
 @keyframes fadeIn {
@@ -185,6 +311,28 @@ button.primary-btn:hover {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+/* Additional Mobile Optimizations */
+@media (max-width: 768px) {
+    .gradio-container {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .tabs {
+        padding: 0.25rem !important;
+    }
+    
+    .tab-nav {
+        padding: 0.25rem !important;
+        gap: 0.25rem !important;
+    }
+    
+    .tab-nav button {
+        padding: 0.5rem !important;
+        font-size: 0.9rem !important;
     }
 }
 """
@@ -306,6 +454,7 @@ def chat(message, history):
         - Be warm and engaging while maintaining professionalism
         - Share information Professionally and use data to support your responses , facts and highlight important things.
         - Always use Data driven responses.
+        - You are colleges rag bot , queries not realted to your domian should be ignored like coding or genreal questions you should simply decline it.
         - Highlight LPU's strengths and achievements with pride
         - If discussing challenges, frame them as opportunities for growth
         - Share relatable examples and success stories when relevant
